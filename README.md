@@ -9,9 +9,9 @@ Perfect for students, professionals, and hobbyists alike, Orbix makes it easy to
 ```
 <YYYY-MM-DD>_<type>_<title-or-purpose>.<extension>
 ```
-**Date:** Helps sort out file chronologically and track changes.
-**Type:** Indicate file's category (e.g., notes, research, script, doc, report, etc.).
-**Title or purpose:** A concise description, using lowercase and hyphens for spaces.
+- **Date:** Helps sort out file chronologically and track changes.
+- **Type:** Indicate file's category (e.g., notes, research, script, doc, report, etc.).
+- **Title or purpose:** A concise description, using lowercase and hyphens for spaces.
 
 #### Examples
 
@@ -54,7 +54,7 @@ Orbix organizes your workspace into distinct directories to maintain clarity and
 ~/Workspace/KnowledgeBase/
 ```
 - Central repository for notes, research and references.
-- You can organize this directory using your preferred method (e.g., PARA, Zettlekasten, etc.).
+- You can organize this directory using your preferred method (e.g., PARA, Zettelkasten, etc.).
 
 
 
