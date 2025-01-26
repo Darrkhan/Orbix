@@ -1,0 +1,132 @@
+#!/bin/bash
+
+# Function to create a new file based on the specified naming convention
+newnote() {
+    local note_date=$(date +%Y-%m-%d)
+    local type="$1" # The type of the file, e.g., note, script, doc
+    local title="$2" # The title or purpose of the file
+    local extension="$3" # The file extension, e.g., md, sh, pdf
+    local target_dir="$4" # Target directory based on flags
+
+    # Format the filename
+    local filename="${note_date}_${type}_${title}.${extension}"
+    local filepath="$target_dir/$filename"
+
+    # Ensure the target directory exists
+    mkdir -p "$target_dir"
+
+    # If the file is a markdown file, add frontmatter by default
+    if [[ "$extension" == "md" ]]; then
+        {
+            echo "---"
+            echo "title: \"${title//-/ }\""
+            echo "date: \"$note_date\""
+            echo "---"
+        } > "$filepath"
+    else
+        # Create an empty file for other extensions
+        touch "$filepath"
+    fi
+
+    echo "Created new file: $filepath"
+}
+
+# Function to rename an existing file to follow the naming convention
+renamefile() {
+    local old_filepath="$1"
+    local type="$2"
+    local title="$3"
+    local target_dir="$4"
+
+    if [[ ! -f "$old_filepath" ]]; then
+        echo "Error: File does not exist: $old_filepath"
+        return 1
+    fi
+
+    local extension="${old_filepath##*.}" # Extract the file extension
+    local note_date=$(date +%Y-%m-%d -r "$old_filepath") # Use file modification date
+
+    # Format the new filename
+    local new_filename="${note_date}_${type}_${title}.${extension}"
+    local new_filepath="$target_dir/$new_filename"
+
+    # Ensure the target directory exists
+    mkdir -p "$target_dir"
+
+    # Rename the file
+    mv "$old_filepath" "$new_filepath"
+
+    echo "Renamed file to: $new_filepath"
+}
+
+# Function to parse flags and set appropriate variables for creating or renaming files
+parse_flags() {
+    local mode="$1"
+    shift
+
+    local type=""
+    local target_dir=""
+
+    while getopts "nsdPArcR" flag; do
+        case "$flag" in
+            n) type="note" ;;
+            s) type="script" ;;
+            d) type="doc" ;;
+            P) target_dir="$HOME/Workspace/KnowledgeBase/Projects" ;;
+            A) target_dir="$HOME/Workspace/KnowledgeBase/Areas" ;;
+            Arc) target_dir="$HOME/Workspace/KnowledgeBase/Archives" ;;
+            R) target_dir="$HOME/Workspace/KnowledgeBase/Resources" ;;
+            *) echo "Invalid flag: $flag"; exit 1 ;;
+        esac
+    done
+
+    # Shift past the processed flags
+    shift $((OPTIND - 1))
+
+    if [[ "$mode" == "new" ]]; then
+        # Title and extension are required as remaining arguments
+        local title="$1"
+        local extension="$2"
+
+        if [[ -z "$type" || -z "$title" || -z "$extension" || -z "$target_dir" ]]; then
+            echo "Error: Missing required arguments."
+            echo "Usage: $0 new -[nsd] -[PArcR] <title> <extension>"
+            exit 1
+        fi
+
+        newnote "$type" "$title" "$extension" "$target_dir"
+    elif [[ "$mode" == "rename" ]]; then
+        # Old file path, new title are required as remaining arguments
+        local old_filepath="$1"
+        local title="$2"
+
+        if [[ -z "$type" || -z "$old_filepath" || -z "$title" || -z "$target_dir" ]]; then
+            echo "Error: Missing required arguments."
+            echo "Usage: $0 rename -[nsd] -[PArcR] <old_filepath> <new_title>"
+            exit 1
+        fi
+
+        renamefile "$old_filepath" "$type" "$title" "$target_dir"
+    fi
+}
+
+# Main script
+case "$1" in
+    new)
+        shift
+        parse_flags "new" "$@"
+        ;;
+    rename)
+        shift
+        parse_flags "rename" "$@"
+        ;;
+    *)
+        echo "Usage: kbm {new|rename} [flags] [arguments...]"
+        echo "Commands:"
+        echo "  new -[nsd] -[PArcR] <title> <extension>"
+        echo "      Create a new file with the specified type, title, extension, and target directory."
+        echo "  rename -[nsd] -[PArcR] <old_filepath> <new_title>"
+        echo "      Rename an existing file to follow the naming convention."
+        ;;
+esac
+
