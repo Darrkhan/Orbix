@@ -67,11 +67,16 @@ parse_flags() {
     local type=""
     local target_dir=""
 
-    while getopts "nsdPArcR" flag; do
+    while getopts "nsdirmIDPAArcR" flag; do
         case "$flag" in
             n) type="note" ;;
             s) type="script" ;;
             d) type="doc" ;;
+            i) type="image" ;;
+            r) type="report" ;;
+            m) type="misc";;
+            I) target_dir="$HOME/Pictures" ;;
+            D) target_dir="$HOME/Documents" ;;
             P) target_dir="$HOME/Workspace/KnowledgeBase/Projects" ;;
             A) target_dir="$HOME/Workspace/KnowledgeBase/Areas" ;;
             Arc) target_dir="$HOME/Workspace/KnowledgeBase/Archives" ;;

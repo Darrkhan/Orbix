@@ -43,6 +43,11 @@ It enforces a consistent naming convention and integrates with Orbix.
      - `-n`: Note
      - `-s`: Script
      - `-d`: Document
+     - `-i`: Image
+     - `-r`: Report
+     - `-m`: Misc
+     - `-D`: Save to `Documents`
+     - `-I`: Save to `Pictures`
      - `-P`: Save to `Projects`
      - `-A`: Save to `Areas`
      - `-Arc`: Save to `Archives`
