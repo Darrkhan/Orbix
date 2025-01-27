@@ -1,0 +1,166 @@
+#!/bin/bash
+
+# Directory for KnowledgeBase Resources
+KB_RESOURCES_DIR="$HOME/Workspace/KnowledgeBase/Resources"
+
+# Ensure the KnowledgeBase Resources directory exists
+mkdir -p "$KB_RESOURCES_DIR"
+
+# Predefined list of categories
+CATEGORIES=("note" "script" "doc" "image" "misc")
+LOCATIONS=("Resources" "Documents" "Pictures" "Projects" "Archives" "Areas")
+
+# Function to display category menu and get user selection
+select_category() {
+    echo "Select a category:"
+    local i=1
+    for category in "${CATEGORIES[@]}"; do
+        echo "$i) $category"
+        ((i++))
+    done
+
+    local choice=""
+    while true; do
+        read -p "Enter the number corresponding to the category: " choice
+        if [[ "$choice" =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#CATEGORIES[@]})); then
+            SELECTED_CATEGORY="${CATEGORIES[choice-1]}"
+            break
+        else
+            echo "Invalid selection. Please choose a valid number."
+        fi
+    done
+}
+
+# Function to display location menu and get user selection
+select_location() {
+    echo "Select a location:"
+    local i=1
+    for location in "${LOCATIONS[@]}"; do
+        echo "$i) $location"
+        ((i++))
+    done
+
+    local choice=""
+    while true; do
+        read -p "Enter the number corresponding to the location: " choice
+        if [[ "$choice" =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#LOCATIONS[@]})); then
+            SELECTED_LOCATION="${LOCATIONS[choice-1]}"
+            break
+        else
+            echo "Invalid selection. Please choose a valid number."
+        fi
+    done
+}
+
+
+# Function to validate and lint the new title
+lint_title() {
+    local title="$1"
+    # Replace spaces with hyphens
+    title="${title// /-}"
+    # Remove invalid characters
+    title="$(echo "$title" | tr -cd '[:alnum:]-')"
+    # Convert to lowercase
+    title="${title,,}"
+    echo "$title"
+}
+
+# Function to rename and move files using kbm
+process_file() {
+    local file_path="$1"
+    local file_name="$(basename -- "$file_path")"
+
+    echo "Processing: $file_name"
+
+    # Prompt to decide whether to process the file
+    while true; do
+        read -p "Do you want to process this file? (y/n): " yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) echo "Skipping $file_name."; return;;
+            * ) echo "Please answer yes (y) or no (n).";;
+        esac
+    done
+
+    # Get category from the list
+    SELECTED_CATEGORY=""
+    select_category
+
+    # Validate that the category was selected
+    if [[ -z "$SELECTED_CATEGORY" ]]; then
+        echo "No category selected. Skipping $file_name."
+        return
+    fi
+    SELECTED_LOCATION=""
+    select_location
+    
+    # Validate that the location was selected
+    if [[ -z "$SELECTED_LOCATION" ]]; then
+        echo "No location selected. Skipping $file_name."
+        return
+    fi
+
+    # Prompt for a new title
+    local new_title=""
+    while [[ -z "$new_title" ]]; do
+        read -p "Enter a new title for the file (use hyphens instead of spaces): " new_title
+        if [[ -z "$new_title" ]]; then
+            echo "Title cannot be empty."
+            continue
+        fi
+        # Lint the title
+        new_title="$(lint_title "$new_title")"
+        echo "Sanitized title: $new_title"
+    done
+
+    # Determine the flag for the selected category
+    local category_flag=""
+    case "$SELECTED_CATEGORY" in
+        "note") category_flag="-n";;
+        "script") category_flag="-s";;
+        "doc") category_flag="-d";;
+        "report") category_flag="-r";;
+        "image") category_flag="-i";;
+        "misc") category_flag="-m";;
+        *) echo "Unknown category. Skipping."; return;;
+    esac
+
+    local location_flag=""
+    case "$SELECTED_LOCATION" in
+      "Resources") location_flag="-R";;
+      "Documents") location_flag="-D";;
+      "Pictures") location_flag="-I";;
+      "Projects") location_flag="-P";;
+      "Archives") location_flag="-Arc";;
+      "Areas") location_flag="-A";;
+    esac
+    
+    echo "l: $location_flag"
+    echo "c: $category_flag"
+    # Use kbm to rename and move the file
+    kbm rename "$category_flag" "$location_flag" "$file_path" "$new_title"
+
+    if [[ $? -eq 0 ]]; then
+        echo "File successfully processed and moved to $KB_RESOURCES_DIR."
+    else
+        echo "Failed to process $file_name."
+    fi
+}
+
+# Main script execution
+TARGET_DIR=${1:-"$HOME/Downloads"}
+
+if [[ ! -d "$TARGET_DIR" ]]; then
+    echo "Error: Target directory $TARGET_DIR does not exist."
+    exit 1
+fi
+
+# Iterate over files in the target directory
+for file in "$TARGET_DIR"/*; do
+    if [[ -f "$file" ]]; then
+        process_file "$file"
+    fi
+done
+
+echo "All files processed."
+
